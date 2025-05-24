@@ -55,51 +55,12 @@ def scheduled_csv_import():
     """Scheduled function to import CSV files from a designated directory"""
     with app.app_context():
         try:
-            # Look for CSV files in the imports directory
-            import_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'auto_imports')
+            # Use the robust agency CSV processor
+            from agency_csv_processor import process_agency_csv_files
+            process_agency_csv_files()
             
-            if not os.path.exists(import_dir):
-                return
-            
-            csv_files = glob.glob(os.path.join(import_dir, '*.csv'))
-            
-            for csv_file in csv_files:
-                try:
-                    filename = os.path.basename(csv_file)
-                    
-                    # Check if this file has already been imported
-                    existing_import = CSVImport.query.filter_by(filename=filename).first()
-                    if existing_import:
-                        continue
-                    
-                    # Create import record
-                    csv_import = CSVImport(
-                        filename=filename,
-                        file_path=csv_file,
-                        status='Pending'
-                    )
-                    db.session.add(csv_import)
-                    db.session.commit()
-                    
-                    # Process the file (assuming it's for user ID 1 for auto imports)
-                    # In a real application, you'd need to determine the user ID from the file
-                    result = process_csv_file(csv_file, 1, csv_import.id)
-                    
-                    if result['success']:
-                        logging.info(f"Auto-imported CSV file: {filename}")
-                        # Move processed file to processed directory
-                        processed_dir = os.path.join(import_dir, 'processed')
-                        os.makedirs(processed_dir, exist_ok=True)
-                        os.rename(csv_file, os.path.join(processed_dir, filename))
-                    else:
-                        logging.error(f"Failed to auto-import CSV file: {filename} - {result['error']}")
-                        
-                except Exception as e:
-                    logging.error(f"Error processing auto-import file {csv_file}: {str(e)}")
-                    continue
-                    
         except Exception as e:
-            logging.error(f"Error in scheduled_csv_import: {str(e)}")
+            logging.error(f"Agency CSV import failed: {str(e)}")
 
 def scheduled_data_refresh():
     """Scheduled function to refresh data from APIs"""

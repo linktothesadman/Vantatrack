@@ -1,0 +1,10 @@
+client_email,campaign_name,platform,date,impressions,clicks,spent,reach,budget,status
+client1@example.com,Brand Awareness Q4,Facebook,2024-01-15,12560,580,1250.50,8954,5000,Active
+client1@example.com,Holiday Promotion,Facebook,2024-01-16,15200,720,1520.75,11200,6000,Active
+client2@company.com,Product Launch,Google,2024-01-15,9800,450,980.25,7500,4000,Active
+client2@company.com,Retargeting Campaign,Google,2024-01-16,6500,290,650.80,4200,3000,Active
+client3@business.net,Social Media Drive,ShareIT,2024-01-15,8200,380,820.45,6100,3500,Active
+client1@example.com,Brand Awareness Q4,Facebook,2024-01-17,13100,610,1310.60,9200,5000,Active
+client1@example.com,Holiday Promotion,Facebook,2024-01-17,15800,750,1580.90,11500,6000,Active
+client2@company.com,Product Launch,Google,2024-01-17,10200,470,1020.35,7800,4000,Active
+client3@business.net,Social Media Drive,ShareIT,2024-01-17,8600,400,860.25,6300,3500,Active

@@ -44,18 +44,7 @@
                         <span>Report</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'agency.agency_upload' %}active{% endif %}" href="{{ url_for('agency.agency_upload') }}">
-                        <i class="fas fa-upload"></i>
-                        <span>Agency Upload</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'agency.view_clients' %}active{% endif %}" href="{{ url_for('agency.view_clients') }}">
-                        <i class="fas fa-users"></i>
-                        <span>All Clients</span>
-                    </a>
-                </li>
+
                 <li class="nav-item">
                     <a class="nav-link" href="#" onclick="refreshData()">
                         <i class="fas fa-sync-alt"></i>
