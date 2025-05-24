@@ -1,6 +1,7 @@
 from app import app
 import routes  # noqa: F401
 import auth  # noqa: F401
+import agency_management  # noqa: F401
 from scheduler import start_scheduler
 
 if __name__ == "__main__":

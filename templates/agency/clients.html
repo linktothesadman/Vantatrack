@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}All Clients - VantaTrack{% endblock %}
+
+{% block page_title %}Client Overview{% endblock %}
+{% block page_subtitle %}View all clients and their campaign performance{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="clients-overview-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-users me-2"></i>All Clients</h5>
+                <a href="{{ url_for('agency.agency_upload') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-upload me-2"></i>Upload New Data
+                </a>
+            </div>
+            <div class="card-body">
+                {% if client_stats %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Campaigns</th>
+                                <th>Platforms</th>
+                                <th>Total Budget</th>
+                                <th>Total Spent</th>
+                                <th>Impressions</th>
+                                <th>Clicks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client_data in client_stats %}
+                            <tr>
+                                <td>
+                                    <div class="client-info">
+                                        <div class="client-avatar">
+                                            <img src="https://ui-avatars.com/api/?name={{ client_data.client.get_full_name() }}&background=6366f1&color=fff" 
+                                                 class="rounded-circle" width="32" height="32">
+                                        </div>
+                                        <div class="client-details">
+                                            <div class="client-name">{{ client_data.client.get_full_name() }}</div>
+                                            <div class="client-email">{{ client_data.client.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ client_data.campaign_count }}</span>
+                                </td>
+                                <td>
+                                    <div class="platform-badges">
+                                        {% for platform in client_data.platforms %}
+                                        <span class="badge platform-badge platform-{{ platform.lower() }}">{{ platform }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>৳{{ "{:,}".format(client_data.total_budget|int) }}</strong>
+                                </td>
+                                <td>
+                                    <span class="spent-amount">৳{{ "{:,}".format(client_data.total_spent|int) }}</span>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar" style="width: {{ (client_data.total_spent / client_data.total_budget * 100) if client_data.total_budget > 0 else 0 }}%"></div>
+                                    </div>
+                                </td>
+                                <td>{{ "{:,}".format(client_data.total_impressions) }}</td>
+                                <td>{{ "{:,}".format(client_data.total_clicks) }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewClientDashboard('{{ client_data.client.id }}')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="downloadClientReport('{{ client_data.client.id }}')">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h6>No clients yet</h6>
+                    <p class="text-muted mb-4">Upload campaign data to see client information</p>
+                    <a href="{{ url_for('agency.agency_upload') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload Campaign Data
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="summary-content">
+                <h3>{{ client_stats|length }}</h3>
+                <p>Total Clients</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <div class="summary-content">
+                <h3>{{ client_stats|sum(attribute='campaign_count') }}</h3>
+                <p>Active Campaigns</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="summary-content">
+                <h3>৳{{ "{:,}".format(client_stats|sum(attribute='total_budget')|int) }}</h3>
+                <p>Total Budget</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="summary-content">
+                <h3>{{ "{:,}".format(client_stats|sum(attribute='total_impressions')) }}</h3>
+                <p>Total Impressions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.clients-overview-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+.card-header h5 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.client-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.client-details .client-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.client-details .client-email {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.platform-badges {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.platform-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.platform-facebook { background-color: #1877f2; }
+.platform-google { background-color: #4285f4; }
+.platform-shareit { background-color: #8b5cf6; }
+.platform-instagram { background-color: #e4405f; }
+.platform-linkedin { background-color: #0077b5; }
+
+.spent-amount {
+    font-weight: 600;
+    color: #495057;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 100%;
+}
+
+.summary-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.summary-content h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #495057;
+    margin: 0;
+}
+
+.summary-content p {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    color: #6c757d;
+}
+</style>
+
+<script>
+function viewClientDashboard(clientId) {
+    // This would open the client's dashboard view
+    window.open('/dashboard?client_id=' + clientId, '_blank');
+}
+
+function downloadClientReport(clientId) {
+    // This would download a report for the specific client
+    const link = document.createElement('a');
+    link.href = '/api/client/' + clientId + '/report';
+    link.download = 'client_' + clientId + '_report.pdf';
+    link.click();
+}
+</script>
+{% endblock %}
