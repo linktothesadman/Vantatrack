@@ -4,11 +4,13 @@ from datetime import datetime, date
 from app import db
 from models import Campaign, CampaignData, CSVImport
 
-def process_csv_file(file_path, user_id, import_id):
+def process_csv_file(file_path, import_id, client_identifier_column='client_email'):
     """
-    Process a CSV file and import campaign data
+    Process a CSV file from ad platforms containing data for ALL clients
     Expected CSV format:
-    campaign_name,platform,date,impressions,clicks,spent,reach,budget,status
+    client_email,campaign_name,platform,date,impressions,clicks,spent,reach,budget,status
+    
+    The system will automatically assign campaigns to the correct users based on client_email
     """
     try:
         # Update import status
@@ -20,7 +22,7 @@ def process_csv_file(file_path, user_id, import_id):
         df = pd.read_csv(file_path)
         
         # Validate required columns
-        required_columns = ['campaign_name', 'platform', 'date', 'impressions', 'clicks', 'spent']
+        required_columns = [client_identifier_column, 'campaign_name', 'platform', 'date', 'impressions', 'clicks', 'spent']
         missing_columns = [col for col in required_columns if col not in df.columns]
         
         if missing_columns:
@@ -31,18 +33,29 @@ def process_csv_file(file_path, user_id, import_id):
         
         for index, row in df.iterrows():
             try:
-                # Get or create campaign
+                # Find the client user based on email or other identifier
+                from models import User
+                client_identifier = row[client_identifier_column]
+                user = User.query.filter_by(email=client_identifier).first()
+                
+                if not user:
+                    # Skip this row if client doesn't exist in the system
+                    logging.warning(f"Client not found: {client_identifier}")
+                    rows_failed += 1
+                    continue
+                
+                # Get or create campaign for this specific client
                 campaign = Campaign.query.filter_by(
                     name=row['campaign_name'],
                     platform=row['platform'],
-                    user_id=user_id
+                    user_id=user.id
                 ).first()
                 
                 if not campaign:
                     campaign = Campaign(
                         name=row['campaign_name'],
                         platform=row['platform'],
-                        user_id=user_id,
+                        user_id=user.id,
                         budget=float(row.get('budget', 0)),
                         status=row.get('status', 'In-Progress')
                     )

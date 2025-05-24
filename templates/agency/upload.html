@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Agency CSV Upload - VantaTrack{% endblock %}
+
+{% block page_title %}Agency Management{% endblock %}
+{% block page_subtitle %}Upload CSV files from ad platforms (Facebook, Google, ShareIT){% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="upload-card">
+            <div class="card-header">
+                <h5><i class="fas fa-upload me-2"></i>Upload Platform Data</h5>
+                <p class="text-muted mb-0">Upload CSV files containing campaign data for all clients</p>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="agency-upload-form">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Select Platform</label>
+                            <select name="platform" class="form-select" required>
+                                <option value="">Choose platform...</option>
+                                <option value="Facebook">Facebook Ads</option>
+                                <option value="Google">Google Ads</option>
+                                <option value="ShareIT">ShareIT</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CSV File</label>
+                            <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+                            <div class="form-text">Expected columns: client_email, campaign_name, date, impressions, clicks, spent, reach, budget, status</div>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-info mb-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>How it works:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Upload CSV files exported from your ad platforms</li>
+                                <li>System automatically assigns campaigns to registered clients based on email</li>
+                                <li>Clients will only see their own campaign data when they log in</li>
+                                <li>Data is securely filtered and isolated per client</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload & Process CSV
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="stats-card">
+            <h6>Quick Stats</h6>
+            <div class="stat-item">
+                <span class="label">Recent Uploads:</span>
+                <span class="value">{{ recent_imports|length }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Last Upload:</span>
+                <span class="value">
+                    {% if recent_imports %}
+                        {{ recent_imports[0].created_at.strftime('%b %d, %Y') }}
+                    {% else %}
+                        Never
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <div class="quick-actions mt-3">
+            <h6>Quick Actions</h6>
+            <a href="{{ url_for('agency.view_clients') }}" class="btn btn-outline-primary btn-sm d-block mb-2">
+                <i class="fas fa-users me-2"></i>View All Clients
+            </a>
+            <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary btn-sm d-block">
+                <i class="fas fa-chart-bar me-2"></i>Platform Reports
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Uploads -->
+<div class="row">
+    <div class="col-12">
+        <div class="recent-uploads-card">
+            <div class="card-header">
+                <h5><i class="fas fa-history me-2"></i>Recent Uploads</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_imports %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Status</th>
+                                <th>Rows Processed</th>
+                                <th>Upload Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for import in recent_imports %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-csv text-success me-2"></i>
+                                        {{ import.filename }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ 'success' if import.status == 'Completed' else 'warning' if import.status == 'Processing' else 'danger' }}">
+                                        {{ import.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if import.rows_processed %}
+                                        {{ import.rows_processed }} rows
+                                        {% if import.rows_failed > 0 %}
+                                            <small class="text-warning">({{ import.rows_failed }} failed)</small>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ import.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state text-center py-4">
+                    <i class="fas fa-upload fa-3x text-muted mb-3"></i>
+                    <h6>No uploads yet</h6>
+                    <p class="text-muted">Upload your first CSV file to get started</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-card, .stats-card, .recent-uploads-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+.card-header h5 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.stats-card {
+    padding: 1.5rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.stat-item .label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.stat-item .value {
+    font-weight: 600;
+    color: #495057;
+}
+
+.quick-actions h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.upload-info .alert {
+    border-left: 4px solid #0dcaf0;
+}
+
+.badge-success { background-color: #198754; }
+.badge-warning { background-color: #ffc107; color: #000; }
+.badge-danger { background-color: #dc3545; }
+
+.empty-state {
+    color: #6c757d;
+}
+</style>
+
+<script>
+// Add progress indication for file upload
+document.getElementById('agency-upload-form').addEventListener('submit', function() {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}
