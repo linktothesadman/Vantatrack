@@ -1,0 +1,107 @@
+from datetime import datetime
+from app import db
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    first_name = db.Column(db.String(50), nullable=True)
+    last_name = db.Column(db.String(50), nullable=True)
+    company_name = db.Column(db.String(100), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    campaigns = db.relationship('Campaign', backref='client', lazy=True)
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def get_full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
+
+class Campaign(db.Model):
+    __tablename__ = 'campaigns'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    platform = db.Column(db.String(50), nullable=False)  # Facebook, Google, ShareIT
+    status = db.Column(db.String(50), default='Pending')  # Pending, In-Progress, Completed
+    budget = db.Column(db.Float, default=0.0)
+    spent = db.Column(db.Float, default=0.0)
+    impressions = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    reach = db.Column(db.Integer, default=0)
+    ctr = db.Column(db.Float, default=0.0)  # Click-through rate
+    cpm = db.Column(db.Float, default=0.0)  # Cost per mille
+    cpc = db.Column(db.Float, default=0.0)  # Cost per click
+    cpa = db.Column(db.Float, default=0.0)  # Cost per acquisition
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Foreign key
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    def get_remaining_budget(self):
+        return max(0, self.budget - self.spent)
+    
+    def get_budget_percentage(self):
+        if self.budget > 0:
+            return min(100, (self.spent / self.budget) * 100)
+        return 0
+    
+    def calculate_ctr(self):
+        if self.impressions > 0:
+            self.ctr = (self.clicks / self.impressions) * 100
+        return self.ctr
+
+class CampaignData(db.Model):
+    __tablename__ = 'campaign_data'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    campaign_id = db.Column(db.Integer, db.ForeignKey('campaigns.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    impressions = db.Column(db.Integer, default=0)
+    clicks = db.Column(db.Integer, default=0)
+    spent = db.Column(db.Float, default=0.0)
+    reach = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    campaign = db.relationship('Campaign', backref='daily_data')
+
+class CSVImport(db.Model):
+    __tablename__ = 'csv_imports'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    status = db.Column(db.String(50), default='Pending')  # Pending, Processing, Completed, Failed
+    rows_processed = db.Column(db.Integer, default=0)
+    rows_failed = db.Column(db.Integer, default=0)
+    error_message = db.Column(db.Text)
+    imported_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    # Relationships
+    user = db.relationship('User', backref='csv_imports')
+
+class SystemSettings(db.Model):
+    __tablename__ = 'system_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    setting_key = db.Column(db.String(100), unique=True, nullable=False)
+    setting_value = db.Column(db.Text)
+    description = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

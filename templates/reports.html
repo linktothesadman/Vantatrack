@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - VantaTrack{% endblock %}
+
+{% block page_title %}Report{% endblock %}
+{% block page_subtitle %}Here is the information about all your Campaigns{% endblock %}
+
+{% block content %}
+<!-- Campaign Filter and Search -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-bullhorn me-2"></i>Campaign Name
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('reports') }}">All Campaigns</a></li>
+                {% for campaign in campaigns %}
+                <li><a class="dropdown-item" href="#">{{ campaign.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="d-flex gap-2">
+            <div class="search-box flex-grow-1">
+                <input type="text" class="form-control" placeholder="Search campaigns..." id="search-input">
+                <i class="fas fa-search search-icon"></i>
+            </div>
+            <button class="btn btn-outline-secondary" data-bs-toggle="dropdown">
+                <i class="fas fa-calendar me-2"></i>Select Date
+            </button>
+            <div class="dropdown-menu p-3" style="min-width: 300px;">
+                <div class="row">
+                    <div class="col-6">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-control">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-control">
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary btn-sm">Apply Filter</button>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-share me-2"></i>Share
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('pdf')">
+                        <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('excel')">
+                        <i class="fas fa-file-excel me-2"></i>Export as Excel
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportReport('csv')">
+                        <i class="fas fa-file-csv me-2"></i>Export as CSV
+                    </a></li>
+                </ul>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Select Platform
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('reports') }}">All</a></li>
+                    {% for platform in platforms %}
+                    <li><a class="dropdown-item" href="{{ url_for('reports', platform=platform) }}">{{ platform }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Platform Filter Buttons -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="platform-filter-buttons">
+            <button class="btn btn-sm {{ 'btn-primary' if current_platform == 'All' else 'btn-outline-secondary' }}" 
+                    onclick="filterByPlatform('All')">All</button>
+            {% for platform in platforms %}
+            <button class="btn btn-sm {{ 'btn-primary' if current_platform == platform else 'btn-outline-secondary' }}" 
+                    onclick="filterByPlatform('{{ platform }}')">{{ platform }}</button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Reports Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="reports-table-card">
+            <div class="table-responsive">
+                <table class="table table-hover" id="campaigns-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                Platform Name
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                Campaign Name
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                Status
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                Impressions
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                Reach
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                CTR
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                CPM
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                CPC
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>
+                                CPA
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th>Download</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in campaigns %}
+                        <tr data-platform="{{ campaign.platform }}">
+                            <td>
+                                <span class="platform-badge platform-{{ campaign.platform.lower() }}">
+                                    {{ campaign.platform }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="campaign-info">
+                                    <span class="campaign-name">{{ campaign.name }}</span>
+                                    <small class="text-muted d-block">Created {{ campaign.created_at.strftime('%b %d, %Y') }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ campaign.status.lower().replace('-', '') }}">
+                                    {{ campaign.status }}
+                                </span>
+                            </td>
+                            <td>{{ "{:,}".format(campaign.impressions) }}</td>
+                            <td>{{ "{:,}".format(campaign.reach) }}</td>
+                            <td>{{ "{:.2f}%".format(campaign.ctr) }}</td>
+                            <td>{{ "{:.2f}".format(campaign.cpm) }}</td>
+                            <td>{{ "{:.2f}".format(campaign.cpc) }}</td>
+                            <td>{{ "{:.2f}".format(campaign.cpa) }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="downloadCampaignReport({{ campaign.id }})">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if not campaigns %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h5>No campaigns found</h5>
+                <p class="text-muted">Try adjusting your filters or upload campaign data to get started.</p>
+                <button class="btn btn-primary" onclick="document.getElementById('csv-upload').click()">
+                    <i class="fas fa-upload me-2"></i>Upload Campaign Data
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Details Modal -->
+<div class="modal fade" id="campaignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Campaign Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="campaign-details-content">
+                    <!-- Campaign details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Download Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Search functionality
+document.getElementById('search-input').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#campaigns-table tbody tr');
+    
+    rows.forEach(row => {
+        const campaignName = row.cells[1].textContent.toLowerCase();
+        const platform = row.cells[0].textContent.toLowerCase();
+        
+        if (campaignName.includes(searchTerm) || platform.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Platform filter
+function filterByPlatform(platform) {
+    if (platform === 'All') {
+        window.location.href = "{{ url_for('reports') }}";
+    } else {
+        window.location.href = "{{ url_for('reports') }}?platform=" + platform;
+    }
+}
+
+// Export functions
+function exportReport(format) {
+    // Create a form to submit the export request
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/export_report';
+    
+    const formatInput = document.createElement('input');
+    formatInput.type = 'hidden';
+    formatInput.name = 'format';
+    formatInput.value = format;
+    form.appendChild(formatInput);
+    
+    const platformInput = document.createElement('input');
+    platformInput.type = 'hidden';
+    platformInput.name = 'platform';
+    platformInput.value = '{{ current_platform }}';
+    form.appendChild(platformInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+// Download individual campaign report
+function downloadCampaignReport(campaignId) {
+    // Create a temporary link to download the campaign report
+    const link = document.createElement('a');
+    link.href = '/api/campaign/' + campaignId + '/export';
+    link.download = 'campaign_' + campaignId + '_report.csv';
+    link.click();
+}
+
+// Table sorting
+document.querySelectorAll('th i.fa-sort').forEach(icon => {
+    icon.addEventListener('click', function() {
+        const th = this.parentElement;
+        const table = th.closest('table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const columnIndex = Array.from(th.parentElement.children).indexOf(th);
+        
+        // Toggle sort direction
+        const isAscending = !th.classList.contains('sort-asc');
+        
+        // Remove sort classes from all headers
+        table.querySelectorAll('th').forEach(header => {
+            header.classList.remove('sort-asc', 'sort-desc');
+        });
+        
+        // Add sort class to current header
+        th.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
+        
+        // Sort rows
+        rows.sort((a, b) => {
+            let aValue = a.cells[columnIndex].textContent.trim();
+            let bValue = b.cells[columnIndex].textContent.trim();
+            
+            // Try to parse as numbers
+            const aNum = parseFloat(aValue.replace(/[^0-9.-]/g, ''));
+            const bNum = parseFloat(bValue.replace(/[^0-9.-]/g, ''));
+            
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return isAscending ? aNum - bNum : bNum - aNum;
+            } else {
+                return isAscending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+            }
+        });
+        
+        // Reorder table rows
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+
+// Show campaign details in modal
+function showCampaignDetails(campaignId) {
+    // This would fetch campaign details via AJAX
+    // For now, just show the modal
+    const modal = new bootstrap.Modal(document.getElementById('campaignModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

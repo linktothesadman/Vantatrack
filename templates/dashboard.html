@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - VantaTrack{% endblock %}
+
+{% block page_title %}Welcome Back, {{ current_user.get_full_name() }}{% endblock %}
+{% block page_subtitle %}Here is the information about all your Campaigns{% endblock %}
+
+{% block content %}
+<!-- Campaign Name Dropdown and Period Selector -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-bullhorn me-2"></i>All Campaigns
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">All Campaigns</a></li>
+                {% for campaign in campaigns %}
+                <li><a class="dropdown-item" href="#">{{ campaign.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-calendar me-2"></i>This Week
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Today</a></li>
+                <li><a class="dropdown-item" href="#">This Week</a></li>
+                <li><a class="dropdown-item" href="#">This Month</a></li>
+                <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-value">{{ "{:,}".format(total_impressions) }}</h3>
+                <div class="metric-icon impression-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">Impression</span>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>10.2%</span>
+                    <small>+10% this week</small>
+                </div>
+            </div>
+            <div class="metric-details">
+                <small>eCPM | BDT {{ "{:.2f}".format((total_spent / total_impressions * 1000) if total_impressions > 0 else 0) }}</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-value">{{ "{:,}".format(total_clicks) }}</h3>
+                <div class="metric-icon clicks-icon">
+                    <i class="fas fa-mouse-pointer"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">Clicks</span>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>3.1%</span>
+                    <small>+0.49% this week</small>
+                </div>
+            </div>
+            <div class="metric-details">
+                <small>eCPC | BDT {{ "{:.2f}".format((total_spent / total_clicks) if total_clicks > 0 else 0) }}</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-value">{{ ctr }}%</h3>
+                <div class="metric-icon ctr-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">CTR</span>
+                <div class="metric-change negative">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>2.5%</span>
+                    <small>-0.31% this week</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-value">{{ "{:,}".format(total_reach) }}</h3>
+                <div class="metric-icon reach-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">Reach</span>
+                <div class="metric-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>7.2%</span>
+                    <small>+1.51% this week</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget and Chart Section -->
+<div class="row mb-4">
+    <!-- Budget Cards -->
+    <div class="col-lg-3">
+        <div class="budget-card mb-3">
+            <div class="budget-header">
+                <h4 class="budget-value">৳ {{ "{:,}".format(total_budget|int) }}</h4>
+                <div class="budget-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+            <div class="budget-label">Budget</div>
+            <div class="budget-progress">
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ (total_spent / total_budget * 100) if total_budget > 0 else 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="budget-card">
+            <div class="budget-header">
+                <h4 class="budget-value">৳ {{ "{:,}".format(total_spent|int) }}</h4>
+                <div class="budget-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+            </div>
+            <div class="budget-label">Spend</div>
+            <div class="budget-progress">
+                <div class="progress">
+                    <div class="progress-bar bg-danger" style="width: {{ (total_spent / total_budget * 100) if total_budget > 0 else 0 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chart Section -->
+    <div class="col-lg-9">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5>Impression Vs Click</h5>
+                <div class="chart-legend">
+                    <span class="legend-item">
+                        <span class="legend-color impression-color"></span>
+                        Impression
+                    </span>
+                    <span class="legend-item">
+                        <span class="legend-color clicks-color"></span>
+                        Clicks
+                    </span>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            Monthly
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Daily</a></li>
+                            <li><a class="dropdown-item" href="#">Weekly</a></li>
+                            <li><a class="dropdown-item" href="#">Monthly</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="impressionClickChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Cards Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="section-header">
+            <h5>Other Campaigns</h5>
+            <div class="campaign-filters">
+                <button class="btn btn-sm btn-primary">All</button>
+                <button class="btn btn-sm btn-outline-secondary">Facebook</button>
+                <button class="btn btn-sm btn-outline-secondary">Google</button>
+                <button class="btn btn-sm btn-outline-secondary">ShareIT</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for campaign in campaigns[:3] %}
+    <div class="col-lg-4 mb-4">
+        <div class="campaign-card">
+            <div class="campaign-header">
+                <div class="campaign-image">
+                    {% if campaign.platform == 'Facebook' %}
+                    <div class="campaign-gradient facebook-gradient"></div>
+                    {% elif campaign.platform == 'Google' %}
+                    <div class="campaign-gradient google-gradient"></div>
+                    {% else %}
+                    <div class="campaign-gradient shareit-gradient"></div>
+                    {% endif %}
+                </div>
+                <button class="btn btn-sm btn-outline-secondary favorite-btn">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+            <div class="campaign-content">
+                <h6 class="campaign-name">{{ campaign.name }}</h6>
+                <p class="campaign-platform">{{ campaign.platform }} Page Name link</p>
+                
+                <div class="campaign-metrics">
+                    <div class="row">
+                        <div class="col-6">
+                            <span class="metric-label">Current Budget:</span>
+                            <span class="metric-value">BDT: {{ "{:,}".format(campaign.budget|int) }}</span>
+                        </div>
+                        <div class="col-6">
+                            <span class="metric-label">Remaining:</span>
+                            <span class="metric-value">BDT: {{ "{:,}".format(campaign.get_remaining_budget()|int) }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="campaign-actions">
+                    {% if campaign.status == 'Completed' %}
+                    <button class="btn btn-success btn-sm">See Report</button>
+                    {% else %}
+                    <button class="btn btn-primary btn-sm">Place Bid</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Platform Statistics (if needed) -->
+{% if platform_stats %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="platform-stats-card">
+            <h5>Platform Performance</h5>
+            <div class="row">
+                {% for platform, stats in platform_stats.items() %}
+                <div class="col-md-4">
+                    <div class="platform-stat">
+                        <div class="platform-header">
+                            <h6>{{ platform }}</h6>
+                            <span class="campaign-count">{{ stats.campaigns }} campaigns</span>
+                        </div>
+                        <div class="platform-metrics">
+                            <div class="metric">
+                                <span class="label">Budget:</span>
+                                <span class="value">৳{{ "{:,}".format(stats.budget|int) }}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Spent:</span>
+                                <span class="value">৳{{ "{:,}".format(stats.spent|int) }}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Impressions:</span>
+                                <span class="value">{{ "{:,}".format(stats.impressions) }}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Clicks:</span>
+                                <span class="value">{{ "{:,}".format(stats.clicks) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+// Initialize the main chart
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {
+        dates: {{ chart_dates | tojson }},
+        impressions: {{ impressions_data | tojson }},
+        clicks: {{ clicks_data | tojson }}
+    };
+    
+    initializeImpressionClickChart(chartData);
+});
+</script>
+{% endblock %}
