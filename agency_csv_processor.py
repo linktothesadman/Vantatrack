@@ -186,7 +186,7 @@ class AgencyCSVProcessor:
                 campaign.clicks += clicks
                 campaign.spent += spent
                 campaign.reach = max(campaign.reach, reach)
-                campaign.calculate_ctr()
+                campaign.calculate_metrics()
 
                 # Parse date
                 try:

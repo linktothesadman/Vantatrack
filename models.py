@@ -60,9 +60,32 @@ class Campaign(db.Model):
             return min(100, (self.spent / self.budget) * 100)
         return 0
     
-    def calculate_ctr(self):
+    def calculate_metrics(self):
+        """Calculate and update all marketing metrics"""
+        # CTR (Click-Through Rate)
         if self.impressions > 0:
             self.ctr = (self.clicks / self.impressions) * 100
+        else:
+            self.ctr = 0.0
+        
+        # CPC (Cost Per Click)
+        if self.clicks > 0:
+            self.cpc = self.spent / self.clicks
+        else:
+            self.cpc = 0.0
+        
+        # CPM (Cost Per Mille - Cost per 1000 impressions)
+        if self.impressions > 0:
+            self.cpm = (self.spent / self.impressions) * 1000
+        else:
+            self.cpm = 0.0
+        
+        # CPA (Cost Per Acquisition) - using clicks as conversion proxy
+        if self.clicks > 0:
+            self.cpa = self.spent / self.clicks
+        else:
+            self.cpa = 0.0
+        
         return self.ctr
 
 class CampaignData(db.Model):
