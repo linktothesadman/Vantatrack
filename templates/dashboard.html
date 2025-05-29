@@ -92,10 +92,9 @@
             </div>
             <div class="metric-footer">
                 <span class="metric-label">CTR</span>
-                <div class="metric-change negative">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>2.5%</span>
-                    <small>-0.31% this week</small>
+                <div class="metric-change">
+                    <i class="fas fa-percentage"></i>
+                    <small>Click-through rate</small>
                 </div>
             </div>
         </div>
@@ -111,10 +110,84 @@
             </div>
             <div class="metric-footer">
                 <span class="metric-label">Reach</span>
-                <div class="metric-change positive">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>7.2%</span>
-                    <small>+1.51% this week</small>
+                <div class="metric-change">
+                    <i class="fas fa-eye"></i>
+                    <small>Unique users reached</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row - Cost Metrics -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card cost-card">
+            <div class="metric-header">
+                <h3 class="metric-value">৳{{ "{:,.0f}".format(total_spent) }}</h3>
+                <div class="metric-icon cost-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">Cost (Spent)</span>
+                <div class="metric-change">
+                    <i class="fas fa-wallet"></i>
+                    <small>Total advertising spend</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-value">৳{{ cpc }}</h3>
+                <div class="metric-icon cpc-icon">
+                    <i class="fas fa-hand-pointer"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">CPC</span>
+                <div class="metric-change">
+                    <i class="fas fa-calculator"></i>
+                    <small>Cost per click</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-value">৳{{ cpm }}</h3>
+                <div class="metric-icon cpm-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">CPM</span>
+                <div class="metric-change">
+                    <i class="fas fa-eye"></i>
+                    <small>Cost per 1000 impressions</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <h3 class="metric-value">৳{{ cpv }}</h3>
+                <div class="metric-icon cpv-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-label">CPV</span>
+                <div class="metric-change">
+                    <i class="fas fa-video"></i>
+                    <small>Cost per view</small>
                 </div>
             </div>
         </div>
