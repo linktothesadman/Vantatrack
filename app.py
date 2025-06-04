@@ -20,11 +20,7 @@ app.secret_key = os.environ.get("SESSION_SECRET")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///marketing_dashboard.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Upload configuration
@@ -47,7 +43,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 with app.app_context():
-    # Make sure to import the models here or their tables won't be created
+    # Import models and create tables
     import models  # noqa: F401
     db.create_all()
     logging.info("Database tables created")
