@@ -26,8 +26,8 @@ def dashboard():
     ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
     cpc = (total_spent / total_clicks) if total_clicks > 0 else 0
     cpm = (total_spent / total_impressions * 1000) if total_impressions > 0 else 0
+    cpv = (total_spent / total_reach) if total_reach > 0 else 0
     cpa = cpc  # Using CPC as CPA proxy for now
-    cpv = cpc  # Cost per view, similar to CPC
     
     # Get recent campaign data for charts (last 30 days)
     end_date = datetime.now().date()

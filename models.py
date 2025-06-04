@@ -45,6 +45,7 @@ class Campaign(db.Model):
     ctr = db.Column(db.Float, default=0.0)  # Click-through rate
     cpm = db.Column(db.Float, default=0.0)  # Cost per mille
     cpc = db.Column(db.Float, default=0.0)  # Cost per click
+    cpv = db.Column(db.Float, default=0.0)  # Cost per view
     cpa = db.Column(db.Float, default=0.0)  # Cost per acquisition
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -79,6 +80,12 @@ class Campaign(db.Model):
             self.cpm = (self.spent / self.impressions) * 1000
         else:
             self.cpm = 0.0
+        
+        # CPV (Cost Per View) - using reach as views proxy
+        if self.reach > 0:
+            self.cpv = self.spent / self.reach
+        else:
+            self.cpv = 0.0
         
         # CPA (Cost Per Acquisition) - using clicks as conversion proxy
         if self.clicks > 0:
