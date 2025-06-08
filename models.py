@@ -13,11 +13,20 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(50), nullable=True)
     last_name = db.Column(db.String(50), nullable=True)
     company_name = db.Column(db.String(100), nullable=True)
-    is_active = db.Column(db.Boolean, default=True)
+    phone = db.Column(db.String(20), nullable=True)
+    timezone = db.Column(db.String(50), default='UTC')
+    role = db.Column(db.String(20), default='client')
+    active = db.Column(db.Boolean, default=True)
+    email_verified = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
     
     # Relationships
     campaigns = db.relationship('Campaign', backref='client', lazy=True)
+    notifications = db.relationship('Notification', backref='user', lazy=True)
+    settings = db.relationship('UserSetting', backref='user', lazy=True)
+    activity_logs = db.relationship('ActivityLog', backref='user', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -126,6 +135,39 @@ class CSVImport(db.Model):
     
     # Relationships
     user = db.relationship('User', backref='csv_imports')
+
+class UserSetting(db.Model):
+    __tablename__ = 'user_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    setting_key = db.Column(db.String(100), nullable=False)
+    setting_value = db.Column(db.Text)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __table_args__ = (db.UniqueConstraint('user_id', 'setting_key'),)
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text)
+    type = db.Column(db.String(50), default='info')  # info, success, warning, error
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ActivityLog(db.Model):
+    __tablename__ = 'activity_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    action = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class SystemSettings(db.Model):
     __tablename__ = 'system_settings'
