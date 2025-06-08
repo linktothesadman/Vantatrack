@@ -4,18 +4,36 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from app import app, db
-from models import Campaign, CampaignData, CSVImport, User
-from csv_processor import process_csv_file
+from models import Campaign, CampaignData, CSVImport, User, UserSetting, Notification, ActivityLog
 import logging
+import csv
+import json
+
+def log_activity(action, description=None):
+    """Log user activity"""
+    if current_user.is_authenticated:
+        log = ActivityLog(
+            user_id=current_user.id,
+            action=action,
+            description=description,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        db.session.add(log)
+        db.session.commit()
 
 @app.route('/')
 @login_required
 def dashboard():
-    """Main dashboard view"""
+    """Enhanced dashboard with comprehensive metrics"""
+    # Update last login
+    current_user.last_login = datetime.utcnow()
+    db.session.commit()
+    
     # Get user's campaigns
     campaigns = Campaign.query.filter_by(user_id=current_user.id).all()
     
-    # Calculate summary metrics
+    # Calculate comprehensive summary metrics
     total_impressions = sum(c.impressions for c in campaigns)
     total_clicks = sum(c.clicks for c in campaigns)
     total_reach = sum(c.reach for c in campaigns)
@@ -27,7 +45,7 @@ def dashboard():
     cpc = (total_spent / total_clicks) if total_clicks > 0 else 0
     cpm = (total_spent / total_impressions * 1000) if total_impressions > 0 else 0
     cpv = (total_spent / total_reach) if total_reach > 0 else 0
-    cpa = cpc  # Using CPC as CPA proxy for now
+    cpa = cpc  # Using CPC as CPA proxy
     
     # Get recent campaign data for charts (last 30 days)
     end_date = datetime.now().date()
@@ -45,9 +63,11 @@ def dashboard():
     for data in daily_data:
         date_str = data.date.strftime('%Y-%m-%d')
         if date_str not in chart_data:
-            chart_data[date_str] = {'impressions': 0, 'clicks': 0}
+            chart_data[date_str] = {'impressions': 0, 'clicks': 0, 'spent': 0, 'reach': 0}
         chart_data[date_str]['impressions'] += data.impressions
         chart_data[date_str]['clicks'] += data.clicks
+        chart_data[date_str]['spent'] += data.spent
+        chart_data[date_str]['reach'] += data.reach
     
     # Convert to lists for Chart.js
     dates = sorted(chart_data.keys())
@@ -72,7 +92,9 @@ def dashboard():
         platform_stats[platform]['impressions'] += campaign.impressions
         platform_stats[platform]['clicks'] += campaign.clicks
     
-    return render_template('dashboard.html',
+    log_activity('dashboard_view', 'Viewed dashboard')
+    
+    return render_template('dashboard/index.html',
                          campaigns=campaigns,
                          total_impressions=total_impressions,
                          total_clicks=total_clicks,
@@ -84,10 +106,66 @@ def dashboard():
                          cpm=round(cpm, 2),
                          cpa=round(cpa, 2),
                          cpv=round(cpv, 2),
-                         chart_dates=dates,
-                         impressions_data=impressions_data,
-                         clicks_data=clicks_data,
-                         platform_stats=platform_stats)
+                         chart_data=json.dumps(chart_data),
+                         platform_data=platform_stats)
+
+@app.route('/campaigns')
+@login_required
+def campaigns():
+    """Campaign management page"""
+    campaigns = Campaign.query.filter_by(user_id=current_user.id).order_by(Campaign.updated_at.desc()).all()
+    log_activity('campaigns_view', 'Viewed campaigns list')
+    return render_template('campaigns.html', campaigns=campaigns)
+
+@app.route('/settings')
+@login_required
+def account_settings():
+    """Account settings page"""
+    log_activity('settings_view', 'Viewed account settings')
+    return render_template('settings.html')
+
+@app.route('/settings/update', methods=['POST'])
+@login_required
+def update_settings():
+    """Update user settings"""
+    try:
+        current_user.first_name = request.form.get('first_name')
+        current_user.last_name = request.form.get('last_name')
+        current_user.company_name = request.form.get('company_name')
+        current_user.phone = request.form.get('phone')
+        current_user.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        log_activity('settings_update', 'Updated account settings')
+        flash('Settings updated successfully', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error updating settings', 'error')
+        logging.error(f"Settings update error: {e}")
+    
+    return redirect(url_for('account_settings'))
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    """Notifications page"""
+    notifications = Notification.query.filter_by(
+        user_id=current_user.id
+    ).order_by(Notification.created_at.desc()).all()
+    
+    log_activity('notifications_view', 'Viewed notifications')
+    return render_template('notifications.html', notifications=notifications)
+
+@app.route('/activity')
+@login_required
+def activity_log():
+    """User activity log page"""
+    activities = ActivityLog.query.filter_by(
+        user_id=current_user.id
+    ).order_by(ActivityLog.created_at.desc()).limit(50).all()
+    
+    return render_template('activity.html', activities=activities)
 
 @app.route('/reports')
 @login_required
