@@ -197,7 +197,7 @@
                             <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                 <i class="fas fa-user text-white"></i>
                             </div>
-                            <span>{{ current_user.get_full_name() }}</span>
+                            <span>{{ current_user.get_full_name() if current_user.is_authenticated else 'Guest' }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{{ url_for('account_settings') }}"><i class="fas fa-user-edit me-2"></i>Profile</a></li>

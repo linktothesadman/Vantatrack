@@ -13,20 +13,10 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(50), nullable=True)
     last_name = db.Column(db.String(50), nullable=True)
     company_name = db.Column(db.String(100), nullable=True)
-    phone = db.Column(db.String(20), nullable=True)
-    timezone = db.Column(db.String(50), default='UTC')
-    role = db.Column(db.String(20), default='client')
-    active = db.Column(db.Boolean, default=True)
-    email_verified = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    last_login = db.Column(db.DateTime)
     
     # Relationships
     campaigns = db.relationship('Campaign', backref='client', lazy=True)
-    notifications = db.relationship('Notification', backref='user', lazy=True)
-    settings = db.relationship('UserSetting', backref='user', lazy=True)
-    activity_logs = db.relationship('ActivityLog', backref='user', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

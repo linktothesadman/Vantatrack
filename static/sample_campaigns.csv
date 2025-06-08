@@ -1,0 +1,16 @@
+client_email,campaign_name,platform,date,impressions,clicks,spent,reach,budget,status
+john.doe@email.com,Summer Sale Facebook Campaign,Facebook,2024-06-01,25000,1250,850.50,18500,1000.00,Active
+john.doe@email.com,Summer Sale Google Ads,Google,2024-06-01,18000,900,720.30,15200,800.00,Active
+jane.smith@business.com,Brand Awareness Campaign,Facebook,2024-06-01,32000,960,1200.75,24000,1500.00,Active
+jane.smith@business.com,Product Launch Google,Google,2024-06-01,22000,1100,950.25,19000,1200.00,Active
+mike.wilson@company.com,Holiday Promotion,ShareIT,2024-06-01,15000,450,380.60,12000,500.00,Active
+john.doe@email.com,Summer Sale Facebook Campaign,Facebook,2024-06-02,26500,1325,895.75,19200,1000.00,Active
+john.doe@email.com,Summer Sale Google Ads,Google,2024-06-02,19000,950,760.45,16000,800.00,Active
+jane.smith@business.com,Brand Awareness Campaign,Facebook,2024-06-02,33500,1005,1280.50,25200,1500.00,Active
+jane.smith@business.com,Product Launch Google,Google,2024-06-02,23500,1175,1020.80,20500,1200.00,Active
+mike.wilson@company.com,Holiday Promotion,ShareIT,2024-06-02,16200,486,410.25,13000,500.00,Active
+john.doe@email.com,Summer Sale Facebook Campaign,Facebook,2024-06-03,24800,1240,825.30,18000,1000.00,Active
+john.doe@email.com,Summer Sale Google Ads,Google,2024-06-03,17500,875,695.60,14800,800.00,Active
+jane.smith@business.com,Brand Awareness Campaign,Facebook,2024-06-03,31000,930,1150.25,23000,1500.00,Active
+jane.smith@business.com,Product Launch Google,Google,2024-06-03,21000,1050,890.75,18200,1200.00,Active
+mike.wilson@company.com,Holiday Promotion,ShareIT,2024-06-03,14500,435,365.80,11500,500.00,Active

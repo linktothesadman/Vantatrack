@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Campaigns - Marketing Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Campaigns</h1>
+        <a href="{{ url_for('upload_csv') }}" class="btn btn-primary">
+            <i class="fas fa-upload me-1"></i> Upload Data
+        </a>
+    </div>
+
+    {% if campaigns %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Campaign Name</th>
+                            <th>Platform</th>
+                            <th>Status</th>
+                            <th class="text-end">Budget</th>
+                            <th class="text-end">Spent</th>
+                            <th class="text-end">Impressions</th>
+                            <th class="text-end">Clicks</th>
+                            <th class="text-end">Reach</th>
+                            <th class="text-end">CTR</th>
+                            <th class="text-end">CPC</th>
+                            <th class="text-end">CPV</th>
+                            <th class="text-end">CPM</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in campaigns %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ campaign.name }}</div>
+                                <small class="text-muted">ID: {{ campaign.id }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if campaign.platform == 'Facebook' %}bg-primary{% elif campaign.platform == 'Google' %}bg-success{% elif campaign.platform == 'ShareIT' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ campaign.platform }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if campaign.status == 'Active' %}bg-success{% elif campaign.status == 'Paused' %}bg-warning text-dark{% elif campaign.status == 'Completed' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ campaign.status }}
+                                </span>
+                            </td>
+                            <td class="text-end">${{ "{:,.2f}".format(campaign.budget) }}</td>
+                            <td class="text-end">${{ "{:,.2f}".format(campaign.spent) }}</td>
+                            <td class="text-end">{{ "{:,}".format(campaign.impressions) }}</td>
+                            <td class="text-end">{{ "{:,}".format(campaign.clicks) }}</td>
+                            <td class="text-end">{{ "{:,}".format(campaign.reach) }}</td>
+                            <td class="text-end">{{ "%.2f"|format(campaign.ctr) }}%</td>
+                            <td class="text-end">${{ "%.2f"|format(campaign.cpc) }}</td>
+                            <td class="text-end">${{ "%.2f"|format(campaign.cpv) }}</td>
+                            <td class="text-end">${{ "%.2f"|format(campaign.cpm) }}</td>
+                            <td>{{ campaign.updated_at.strftime('%b %d, %Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No campaigns found</h5>
+        <p class="text-muted">Upload your campaign data to get started</p>
+        <a href="{{ url_for('upload_csv') }}" class="btn btn-primary">
+            <i class="fas fa-upload me-1"></i> Upload Data
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
