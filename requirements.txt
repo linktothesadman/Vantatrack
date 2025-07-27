@@ -1,0 +1,13 @@
+Flask==2.3.2
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Dance==6.2.0
+email-validator==2.1.0.post1
+gunicorn==21.2.0
+psycopg2-binary
+oauthlib==3.2.2
+PyJWT==2.8.0
+pandas==2.2.2
+APScheduler==3.10.4
+SQLAlchemy==2.0.29
+Werkzeug==2.3.8

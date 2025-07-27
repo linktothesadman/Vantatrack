@@ -4,97 +4,112 @@ from datetime import datetime
 from app import app, db
 from models import User, Campaign, CampaignData, CSVImport
 
+import pandas as pd
+from datetime import datetime
+from app import app, db
+from models import User, Campaign, CampaignData
+
+# Define field mappings with synonyms
+COLUMN_SYNONYMS = {
+    "client_email": ["email", "client", "user_email"],
+    "campaign_name": ["campaign", "name", "ad_name"],
+    "platform": ["channel", "source"],
+    "date": ["day", "reporting_date"],
+    "impressions": ["views", "impr"],
+    "clicks": ["click", "click_throughs",'ctr'],
+    "spent": ["cost", "amount_spent"],
+    "reach": ["audience", "outreach"],
+    "budget": ["daily_budget", "total_budget"],
+    "status": ["state", "campaign_status"]
+}
+
+def match_column(df, standard_name):
+    """Find the best matching column name in the DataFrame based on synonyms"""
+    candidates = [standard_name] + COLUMN_SYNONYMS.get(standard_name, [])
+    for candidate in candidates:
+        for col in df.columns:
+            if col.strip().lower() == candidate.lower():
+                return col
+    return None
+
 def process_csv_file(file_path):
-    """Process uploaded CSV file and import campaign data"""
+    """Process uploaded CSV file and import campaign data with fuzzy matching and partial support"""
     try:
-        # Read CSV file
-        df = pd.read_csv(file_path)
-        
-        # Required columns
-        required_columns = ['client_email', 'campaign_name', 'platform', 'date', 
-                          'impressions', 'clicks', 'spent', 'reach', 'budget', 'status']
-        
-        # Check if all required columns exist
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            return False, f"Missing required columns: {', '.join(missing_columns)}"
-        
-        rows_processed = 0
-        rows_failed = 0
-        
-        for _, row in df.iterrows():
-            try:
-                # Find or create user
-                user = User.query.filter_by(email=row['client_email']).first()
-                if not user:
-                    # Create user with email as username
-                    username = row['client_email'].split('@')[0]
-                    user = User(
-                        username=username,
-                        email=row['client_email'],
-                        password_hash='default_hash'  # They'll need to reset password
-                    )
-                    user.set_password('temp123')  # Temporary password
-                    db.session.add(user)
-                    db.session.flush()  # Get user ID
-                
-                # Find or create campaign
-                campaign = Campaign.query.filter_by(
-                    name=row['campaign_name'],
-                    user_id=user.id,
-                    platform=row['platform']
-                ).first()
-                
-                if not campaign:
-                    campaign = Campaign(
-                        name=row['campaign_name'],
-                        platform=row['platform'],
-                        status=row['status'],
-                        budget=float(row['budget']),
-                        user_id=user.id
-                    )
-                    db.session.add(campaign)
-                    db.session.flush()  # Get campaign ID
-                
-                # Update campaign totals
-                campaign.spent = float(row['spent'])
-                campaign.impressions = int(row['impressions'])
-                campaign.clicks = int(row['clicks'])
-                campaign.reach = int(row['reach'])
-                campaign.budget = float(row['budget'])
-                campaign.status = row['status']
-                campaign.updated_at = datetime.utcnow()
-                
-                # Calculate metrics
-                campaign.calculate_metrics()
-                
-                # Add daily data
-                campaign_date = datetime.strptime(row['date'], '%Y-%m-%d').date()
-                daily_data = CampaignData(
-                    campaign_id=campaign.id,
-                    date=campaign_date,
-                    impressions=int(row['impressions']),
-                    clicks=int(row['clicks']),
-                    spent=float(row['spent']),
-                    reach=int(row['reach'])
+        df = pd.read_csv(file_path, encoding='utf-16', sep=None, engine='python')  # auto-detect separator
+    except UnicodeDecodeError:
+        df = pd.read_csv(file_path, encoding='windows-1252', sep=None, engine='python')
+
+    field_map = {}
+    for field in COLUMN_SYNONYMS.keys():
+        matched = match_column(df, field)
+        if matched:
+            field_map[field] = matched
+
+    rows_processed = 0
+    rows_failed = 0
+
+    for _, row in df.iterrows():
+        try:
+            if 'client_email' not in field_map:
+                continue  # Cannot associate user
+            
+            email = row[field_map['client_email']]
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                username = email.split('@')[0]
+                user = User(username=username, email=email)
+                user.set_password('temp123')
+                db.session.add(user)
+                db.session.flush()
+            
+            name = row.get(field_map.get('campaign_name'), 'Unnamed')
+            platform = row.get(field_map.get('platform'), 'Unknown')
+            campaign = Campaign.query.filter_by(name=name, platform=platform, user_id=user.id).first()
+            if not campaign:
+                campaign = Campaign(
+                    name=name,
+                    platform=platform,
+                    status=row.get(field_map.get('status'), 'active'),
+                    budget=float(row.get(field_map.get('budget'), 0.0)),
+                    user_id=user.id
                 )
-                db.session.add(daily_data)
-                
-                rows_processed += 1
-                
-            except Exception as e:
-                print(f"Error processing row: {e}")
-                rows_failed += 1
-                continue
-        
-        # Commit all changes
-        db.session.commit()
-        
-        return True, f"Successfully processed {rows_processed} rows, {rows_failed} failed"
-        
-    except Exception as e:
-        db.session.rollback()
-        return False, f"Error processing CSV: {str(e)}"
+                db.session.add(campaign)
+                db.session.flush()
+
+            # Update campaign
+            for key in ['spent', 'impressions', 'clicks', 'reach', 'budget', 'status']:
+                if key in field_map:
+                    val = row.get(field_map[key])
+                    if pd.notna(val):
+                        setattr(campaign, key, float(val) if key in ['spent', 'budget'] else int(val) if key != 'status' else val)
+            campaign.updated_at = datetime.utcnow()
+            campaign.calculate_metrics()
+
+            # Daily data
+            if 'date' in field_map:
+                date_str = row.get(field_map['date'])
+                campaign_date = pd.to_datetime(date_str, errors='coerce')
+                if pd.notna(campaign_date):
+                    daily_data = CampaignData(
+                        campaign_id=campaign.id,
+                        date=campaign_date.date(),
+                        impressions=int(row.get(field_map.get('impressions'), 0)),
+                        clicks=int(row.get(field_map.get('clicks'), 0)),
+                        spent=float(row.get(field_map.get('spent'), 0.0)),
+                        reach=int(row.get(field_map.get('reach'), 0)),
+                    )
+                    db.session.add(daily_data)
+
+            rows_processed += 1
+
+        except Exception as e:
+            print(f"Row error: {e}")
+            rows_failed += 1
+            continue
+
+    db.session.commit()
+    return True, f"Processed {rows_processed} rows, {rows_failed} failed"
+       
 
 def create_sample_data():
     """Create sample users and import the sample CSV"""
