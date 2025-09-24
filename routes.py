@@ -29,7 +29,7 @@ def dashboard():
     cpv = (total_spent / total_reach) if total_reach > 0 else 0
     cpa = cpc  # Using CPC as CPA proxy for now
     
-    # Get recent campaign data for charts (last 30 days)
+    # Get recent campaign data for charts (last month)
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=30)
     
